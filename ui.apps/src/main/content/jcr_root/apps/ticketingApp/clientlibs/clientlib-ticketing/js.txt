@@ -1,0 +1,6 @@
+#base=js
+
+ticket-csrf.js
+ticket-list.js
+ticket-detail.js
+ticket-form.js

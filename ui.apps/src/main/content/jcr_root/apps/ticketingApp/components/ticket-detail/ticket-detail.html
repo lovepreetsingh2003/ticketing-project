@@ -1,0 +1,105 @@
+<div class="cmp-ticket-detail" data-cmp-is="ticketDetail">
+
+    <div class="cmp-ticket-detail__nav">
+        <a href="/content/ticketingApp/us/en/tickets.html" class="cmp-ticket-detail__back-link">
+            &larr; Back to Tickets
+        </a>
+    </div>
+
+    <div id="ticket-detail-error" class="cmp-ticket-detail__error" style="display:none;" role="alert"></div>
+    <div id="ticket-detail-banner" class="cmp-ticket-detail__banner" style="display:none;" role="status">
+        <span id="ticket-detail-banner-msg"></span>
+        <button class="cmp-ticket-detail__banner-close" id="ticket-detail-banner-close" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <div id="ticket-detail-loading" class="cmp-ticket-detail__loading">Loading ticket...</div>
+
+    <div id="ticket-detail-content" class="cmp-ticket-detail__content" style="display:none;">
+
+        <div class="cmp-ticket-detail__meta-bar">
+            <span id="td-ticket-id" class="cmp-ticket-detail__id"></span>
+            <span id="td-status" class="cmp-ticket-detail__status-badge"></span>
+            <span id="td-priority" class="cmp-ticket-detail__priority-badge"></span>
+        </div>
+
+        <div class="cmp-ticket-detail__body">
+
+            <section class="cmp-ticket-detail__section">
+                <h1 id="td-title" class="cmp-ticket-detail__title"></h1>
+                <p id="td-description" class="cmp-ticket-detail__description"></p>
+                <div class="cmp-ticket-detail__meta">
+                    <span>Reporter: <strong id="td-reporter"></strong></span>
+                    <span>Assignee: <strong id="td-assignee"></strong></span>
+                    <span>Created: <strong id="td-created"></strong></span>
+                    <span>Updated: <strong id="td-updated"></strong></span>
+                </div>
+            </section>
+
+            <section class="cmp-ticket-detail__section cmp-ticket-detail__actions">
+                <h2 class="cmp-ticket-detail__section-title">Actions</h2>
+                <div id="td-transitions" class="cmp-ticket-detail__transitions"></div>
+                <button id="td-edit-toggle" class="btn btn--secondary">Edit Ticket</button>
+            </section>
+
+            <section id="td-edit-form" class="cmp-ticket-detail__section cmp-ticket-detail__edit-form" style="display:none;">
+                <h2 class="cmp-ticket-detail__section-title">Edit Ticket</h2>
+                <form id="ticket-update-form" novalidate>
+                    <input type="hidden" id="update-ticket-path" name="ticketPath"/>
+                    <div class="cmp-form__field">
+                        <label class="cmp-form__label" for="update-title">Title <span class="cmp-form__required">*</span></label>
+                        <input type="text" id="update-title" name="title" class="cmp-form__input" maxlength="200" required/>
+                        <span class="cmp-form__error" id="update-title-error" role="alert"></span>
+                    </div>
+                    <div class="cmp-form__field">
+                        <label class="cmp-form__label" for="update-description">Description <span class="cmp-form__required">*</span></label>
+                        <textarea id="update-description" name="description" class="cmp-form__textarea" maxlength="5000" required></textarea>
+                        <span class="cmp-form__error" id="update-description-error" role="alert"></span>
+                    </div>
+                    <div class="cmp-form__field">
+                        <label class="cmp-form__label" for="update-priority">Priority <span class="cmp-form__required">*</span></label>
+                        <select id="update-priority" name="priority" class="cmp-form__select" required>
+                            <option value="">Select Priority</option>
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                        <span class="cmp-form__error" id="update-priority-error" role="alert"></span>
+                    </div>
+                    <div class="cmp-form__field">
+                        <label class="cmp-form__label" for="update-assignee">Assignee <span class="cmp-form__required">*</span></label>
+                        <input type="text" id="update-assignee" name="assignee" class="cmp-form__input" maxlength="100"/>
+                        <span class="cmp-form__error" id="update-assignee-error" role="alert"></span>
+                    </div>
+                    <div class="cmp-form__actions">
+                        <button type="submit" class="btn btn--primary">Save Changes</button>
+                        <button type="button" id="td-edit-cancel" class="btn btn--secondary">Cancel</button>
+                    </div>
+                    <div id="update-form-error" class="cmp-form__submit-error" role="alert" style="display:none;"></div>
+                    <div id="update-form-success" class="cmp-form__submit-success" role="status" style="display:none;"></div>
+                </form>
+            </section>
+
+            <section class="cmp-ticket-detail__section cmp-ticket-detail__comments">
+                <h2 class="cmp-ticket-detail__section-title">Comments</h2>
+                <div id="td-comments-list" class="cmp-ticket-detail__comments-list"></div>
+                <form id="ticket-comment-form" class="cmp-ticket-detail__comment-form" novalidate>
+                    <div class="cmp-form__field">
+                        <label class="cmp-form__label" for="comment-author">Your Name</label>
+                        <input type="text" id="comment-author" name="author" class="cmp-form__input" maxlength="100"/>
+                    </div>
+                    <div class="cmp-form__field">
+                        <label class="cmp-form__label" for="comment-body">Comment <span class="cmp-form__required">*</span></label>
+                        <textarea id="comment-body" name="body" class="cmp-form__textarea" rows="3" required placeholder="Add a comment..."></textarea>
+                        <span class="cmp-form__error" id="comment-body-error" role="alert"></span>
+                    </div>
+                    <div class="cmp-form__actions">
+                        <button type="submit" class="btn btn--primary">Add Comment</button>
+                    </div>
+                    <div id="comment-form-error" class="cmp-form__submit-error" role="alert" style="display:none;"></div>
+                </form>
+            </section>
+
+        </div>
+    </div>
+</div>

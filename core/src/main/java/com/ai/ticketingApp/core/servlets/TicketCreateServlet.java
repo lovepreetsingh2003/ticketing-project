@@ -2,6 +2,7 @@ package com.ai.ticketingApp.core.servlets;
 
 import com.ai.ticketingApp.core.enums.TicketPriority;
 import com.ai.ticketingApp.core.services.TicketService;
+import com.ai.ticketingApp.core.services.TicketUserService;
 import com.ai.ticketingApp.core.services.TicketValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -30,6 +31,9 @@ public class TicketCreateServlet extends SlingAllMethodsServlet {
     @Reference
     private TicketValidationService validationService;
 
+    @Reference
+    private TicketUserService ticketUserService;
+
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
@@ -39,12 +43,17 @@ public class TicketCreateServlet extends SlingAllMethodsServlet {
         String description = request.getParameter("description");
         String priority    = request.getParameter("priority");
         String assignee    = request.getParameter("assignee");
-        String reporter    = request.getParameter("reporter");
+        String reporter    = request.getResourceResolver().getUserID();
 
         String validationError = validationService.validateCreate(title, description, priority, assignee, reporter);
         if (validationError != null) {
             response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write(MAPPER.writeValueAsString(errorMap(validationError)));
+            return;
+        }
+        if (!ticketUserService.isAssignableUser(request.getResourceResolver(), assignee)) {
+            response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write(MAPPER.writeValueAsString(errorMap("Assignee must be a QA or Developer user")));
             return;
         }
 

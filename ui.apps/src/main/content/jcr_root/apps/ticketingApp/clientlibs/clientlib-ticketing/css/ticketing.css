@@ -112,6 +112,7 @@
 .cmp-form__textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(0,82,204,.12); }
 .cmp-form__input--invalid,
 .cmp-form__input--invalid:focus { border-color: var(--color-danger); box-shadow: 0 0 0 3px rgba(222,53,11,.12); }
+.cmp-form__input--readonly { background: var(--color-bg); color: var(--color-text-muted); cursor: not-allowed; }
 .cmp-form__textarea { resize: vertical; min-height: 100px; }
 .cmp-form__error    { font-size: .8125rem; color: var(--color-danger); margin-top: .25rem; min-height: 1rem; }
 .cmp-form__actions  { display: flex; gap: .75rem; margin-top: .5rem; }
@@ -142,6 +143,15 @@
     color: var(--color-text);
     margin: 0;
 }
+.cmp-ticket-list__header-actions,
+.cmp-ticket__nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.cmp-ticket__logout-link { color: var(--color-danger); font-size: .875rem; font-weight: 600; text-decoration: none; }
+.cmp-ticket__logout-link:hover { text-decoration: underline; }
 .cmp-ticket-list__filters {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -222,7 +232,7 @@
     padding: 2rem 1.5rem;
     font-family: var(--font-base);
 }
-.cmp-ticket-detail__nav { margin-bottom: 1.5rem; }
+.cmp-ticket-detail__nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .cmp-ticket-detail__back-link { color: var(--color-primary); text-decoration: none; font-size: .875rem; font-weight: 600; }
 .cmp-ticket-detail__back-link:hover { text-decoration: underline; }
 .cmp-ticket-detail__loading { text-align: center; padding: 3rem; color: var(--color-text-muted); }
@@ -285,6 +295,20 @@
 .ticket-comment__date   { font-size: .75rem; color: var(--color-text-muted); }
 .ticket-comment__body   { margin: 0; font-size: .875rem; color: var(--color-text); white-space: pre-wrap; }
 
+/* Status history */
+.cmp-ticket-detail__no-history { color: var(--color-text-muted); font-style: italic; }
+.ticket-history {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
+    flex-wrap: wrap;
+    padding: .65rem 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: .875rem;
+}
+.ticket-history:last-child { border-bottom: 0; }
+.ticket-history time { margin-left: auto; color: var(--color-text-muted); font-size: .75rem; }
+
 /* ============================================================
    Ticket Form (Create) Page
    ============================================================ */
@@ -296,7 +320,9 @@
     font-family: var(--font-base);
 }
 .cmp-ticket-form__header { margin-bottom: 2rem; }
+.cmp-ticket-form__header .cmp-ticket__nav { margin-bottom: .75rem; }
 .cmp-ticket-form__back-link { color: var(--color-primary); text-decoration: none; font-size: .875rem; font-weight: 600; display: block; margin-bottom: .75rem; }
+.cmp-ticket-form__header .cmp-ticket-form__back-link { margin-bottom: 0; }
 .cmp-ticket-form__back-link:hover { text-decoration: underline; }
 .cmp-ticket-form__title { font-size: 1.75rem; font-weight: 700; color: var(--color-text); margin: 0; }
 .cmp-ticket-form__form {

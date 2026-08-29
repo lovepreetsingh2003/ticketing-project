@@ -1,29 +1,29 @@
 package com.ai.ticketingApp.core.models;
 
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.models.annotations.DefaultInjectionStrategy;
-import org.apache.sling.models.annotations.Model;
-import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.Calendar;
-
-@Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
 public class CommentModel {
 
-    @ValueMapValue
-    private String commentId;
-
-    @ValueMapValue
     private String author;
-
-    @ValueMapValue
     private String body;
+    private long created;
 
-    @ValueMapValue
-    private Calendar created;
+    public CommentModel() {
+        // Required by Jackson.
+    }
 
-    public String getCommentId() { return commentId; }
+    public CommentModel(String author, String body, long created) {
+        this.author = author;
+        this.body = body;
+        this.created = created;
+    }
+
+    public static CommentModel fromJson(String json, ObjectMapper mapper) throws JsonProcessingException {
+        return mapper.readValue(json, CommentModel.class);
+    }
+
     public String getAuthor() { return author; }
     public String getBody() { return body; }
-    public Calendar getCreated() { return created; }
+    public long getCreated() { return created; }
 }

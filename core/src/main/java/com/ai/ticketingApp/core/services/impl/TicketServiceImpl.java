@@ -2,8 +2,13 @@ package com.ai.ticketingApp.core.services.impl;
 
 import com.ai.ticketingApp.core.enums.TicketPriority;
 import com.ai.ticketingApp.core.enums.TicketStatus;
+import com.ai.ticketingApp.core.models.CommentModel;
+import com.ai.ticketingApp.core.models.StatusHistoryModel;
 import com.ai.ticketingApp.core.services.TicketService;
 import com.ai.ticketingApp.core.services.TicketStateService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.day.cq.search.PredicateGroup;
 import com.day.cq.search.Query;
 import com.day.cq.search.QueryBuilder;
@@ -22,8 +27,11 @@ import org.slf4j.LoggerFactory;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +41,7 @@ import java.util.UUID;
 public class TicketServiceImpl implements TicketService {
 
     private static final Logger LOG = LoggerFactory.getLogger(TicketServiceImpl.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String TICKETS_ROOT = "/content/ticketingApp/tickets";
     private static final String NT_UNSTRUCTURED = "nt:unstructured";
 
@@ -63,7 +72,6 @@ public class TicketServiceImpl implements TicketService {
             Calendar now = Calendar.getInstance();
             ticketNode.setProperty("created", now);
             ticketNode.setProperty("updated", now);
-            ticketNode.addNode("comments", NT_UNSTRUCTURED);
             session.save();
             return ticketNode.getPath();
         } catch (RepositoryException e) {
@@ -114,7 +122,10 @@ public class TicketServiceImpl implements TicketService {
         TicketStatus currentStatus = TicketStatus.fromString(currentStatusStr);
         stateService.assertTransitionAllowed(currentStatus, newStatus);
         props.put("status", newStatus.name());
-        props.put("updated", Calendar.getInstance());
+        Calendar now = Calendar.getInstance();
+        props.put("updated", now);
+        appendJsonProperty(props, "statusHistory", new StatusHistoryModel(
+            resolver.getUserID(), currentStatus.name(), newStatus.name(), now.getTimeInMillis()));
         try {
             resolver.adaptTo(Session.class).save();
         } catch (RepositoryException e) {
@@ -134,17 +145,15 @@ public class TicketServiceImpl implements TicketService {
                 throw new IllegalArgumentException("Ticket not found at path: " + ticketPath);
             }
             Node ticketNode = session.getNode(ticketPath);
-            Node commentsNode = JcrUtils.getOrCreateByPath(ticketPath + "/comments", NT_UNSTRUCTURED, session);
-            String commentId = "comment-" + UUID.randomUUID().toString().substring(0, 8);
-            Node commentNode = commentsNode.addNode(commentId, NT_UNSTRUCTURED);
-            commentNode.setProperty("commentId", commentId);
-            commentNode.setProperty("author", StringUtils.defaultString(author));
-            commentNode.setProperty("body", body);
-            commentNode.setProperty("created", Calendar.getInstance());
-            ticketNode.setProperty("updated", Calendar.getInstance());
+            Calendar now = Calendar.getInstance();
+            List<String> comments = readStringProperty(ticketNode, "comments");
+            comments.add(MAPPER.writeValueAsString(
+                new CommentModel(StringUtils.defaultString(author), body, now.getTimeInMillis())));
+            ticketNode.setProperty("comments", comments.toArray(new String[0]));
+            ticketNode.setProperty("updated", now);
             session.save();
-            return commentNode.getPath();
-        } catch (RepositoryException e) {
+            return ticketPath;
+        } catch (RepositoryException | JsonProcessingException e) {
             LOG.error("Error adding comment to ticket at {}", ticketPath, e);
             throw new RuntimeException("Failed to add comment: " + e.getMessage(), e);
         }
@@ -235,21 +244,44 @@ public class TicketServiceImpl implements TicketService {
         Calendar updated = vm.get("updated", Calendar.class);
         map.put("created", created != null ? created.getTimeInMillis() : null);
         map.put("updated", updated != null ? updated.getTimeInMillis() : null);
-        List<Map<String, Object>> comments = new ArrayList<>();
-        Resource commentsResource = resource.getChild("comments");
-        if (commentsResource != null) {
-            for (Resource comment : commentsResource.getChildren()) {
-                org.apache.sling.api.resource.ValueMap cvm = comment.getValueMap();
-                Map<String, Object> cmap = new HashMap<>();
-                cmap.put("commentId", cvm.get("commentId", ""));
-                cmap.put("author",    cvm.get("author",    ""));
-                cmap.put("body",      cvm.get("body",      ""));
-                Calendar cCreated = cvm.get("created", Calendar.class);
-                cmap.put("created", cCreated != null ? cCreated.getTimeInMillis() : null);
-                comments.add(cmap);
+        map.put("comments", parseJsonEntries(vm.get("comments", new String[0]), "comment", resource.getPath()));
+        map.put("statusHistory", parseJsonEntries(
+            vm.get("statusHistory", new String[0]), "status history", resource.getPath()));
+        return map;
+    }
+
+    private void appendJsonProperty(ModifiableValueMap props, String propertyName, Object entry) {
+        try {
+            String[] current = props.get(propertyName, new String[0]);
+            List<String> entries = new ArrayList<>();
+            Collections.addAll(entries, current);
+            entries.add(MAPPER.writeValueAsString(entry));
+            props.put(propertyName, entries.toArray(new String[0]));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize " + propertyName + " entry", e);
+        }
+    }
+
+    private List<String> readStringProperty(Node node, String propertyName) throws RepositoryException {
+        List<String> entries = new ArrayList<>();
+        if (!node.hasProperty(propertyName)) {
+            return entries;
+        }
+        for (Value value : node.getProperty(propertyName).getValues()) {
+            entries.add(value.getString());
+        }
+        return entries;
+    }
+
+    private List<Map<String, Object>> parseJsonEntries(String[] entries, String entryType, String resourcePath) {
+        List<Map<String, Object>> parsed = new ArrayList<>();
+        for (String entry : entries) {
+            try {
+                parsed.add(MAPPER.readValue(entry, new TypeReference<Map<String, Object>>() { }));
+            } catch (IOException e) {
+                LOG.warn("Ignoring malformed {} entry on {}", entryType, resourcePath, e);
             }
         }
-        map.put("comments", comments);
-        return map;
+        return parsed;
     }
 }

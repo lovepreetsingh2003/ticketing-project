@@ -2,6 +2,7 @@ package com.ai.ticketingApp.core.servlets;
 
 import com.ai.ticketingApp.core.enums.TicketPriority;
 import com.ai.ticketingApp.core.services.TicketService;
+import com.ai.ticketingApp.core.services.TicketUserService;
 import com.ai.ticketingApp.core.services.TicketValidationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,9 @@ public class TicketUpdateServlet extends SlingAllMethodsServlet {
     @Reference
     private TicketValidationService validationService;
 
+    @Reference
+    private TicketUserService ticketUserService;
+
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
@@ -52,6 +56,11 @@ public class TicketUpdateServlet extends SlingAllMethodsServlet {
         if (validationError != null) {
             response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write(MAPPER.writeValueAsString(errorMap(validationError)));
+            return;
+        }
+        if (!ticketUserService.isAssignableUser(request.getResourceResolver(), assignee)) {
+            response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write(MAPPER.writeValueAsString(errorMap("Assignee must be a QA or Developer user")));
             return;
         }
 

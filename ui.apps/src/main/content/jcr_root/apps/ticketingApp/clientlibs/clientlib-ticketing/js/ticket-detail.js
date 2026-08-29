@@ -5,6 +5,7 @@
     var STATUS_URL  = '/bin/ticketing/ticket/status';
     var UPDATE_URL  = '/bin/ticketing/ticket/update';
     var COMMENT_URL = '/bin/ticketing/ticket/comment';
+    var USERS_URL   = '/bin/ticketing/users';
 
     var VALID_TRANSITIONS = {
         OPEN:        [{ status: 'IN_PROGRESS', label: 'Start Progress' }, { status: 'CANCELLED', label: 'Cancel' }],
@@ -47,6 +48,11 @@
 
     function priorityLabel(p) {
         return { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', CRITICAL: 'Critical' }[p] || p;
+    }
+
+    function currentUser() {
+        var root = document.querySelector('[data-cmp-is="ticketDetail"]');
+        return root ? root.getAttribute('data-user') || '' : '';
     }
 
     function showBanner(msg, isError) {
@@ -99,6 +105,7 @@
 
         renderTransitionButtons(ticket.status);
         renderComments(ticket.comments || []);
+        renderStatusHistory(ticket.statusHistory || []);
 
         var editToggle = document.getElementById('td-edit-toggle');
         var isTerminal = ticket.status === 'CLOSED' || ticket.status === 'CANCELLED';
@@ -146,6 +153,48 @@
         }).join('');
     }
 
+    function renderStatusHistory(history) {
+        var list = document.getElementById('td-status-history');
+        if (!list) return;
+        if (!history.length) {
+            list.innerHTML = '<p class="cmp-ticket-detail__no-history">No status changes yet.</p>';
+            return;
+        }
+        list.innerHTML = history.map(function (entry) {
+            return '<div class="ticket-history">' +
+                '<strong>' + escapeHtml(entry.user || 'Unknown user') + '</strong>' +
+                ' changed <span>' + escapeHtml(statusLabel(entry.from)) + '</span> to ' +
+                '<span>' + escapeHtml(statusLabel(entry.to)) + '</span>' +
+                '<time>' + formatDate(entry.created) + '</time>' +
+            '</div>';
+        }).join('');
+    }
+
+    function loadAssignees() {
+        var select = document.getElementById('update-assignee');
+        if (!select) return;
+        select.disabled = true;
+        fetch(USERS_URL, { credentials: 'same-origin' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('Unable to load assignees');
+                return res.json();
+            })
+            .then(function (users) {
+                select.innerHTML = '<option value="">Select Assignee</option>';
+                users.forEach(function (user) {
+                    var option = document.createElement('option');
+                    option.value = user.userId;
+                    option.textContent = user.displayName || user.userId;
+                    select.appendChild(option);
+                });
+                select.disabled = false;
+            })
+            .catch(function () {
+                select.innerHTML = '<option value="">Assignees unavailable</option>';
+                setFieldError('update-assignee-error', 'Unable to load QA and Developer users');
+            });
+    }
+
     function handleTransition(newStatus) {
         if (!currentTicket) return;
         hideBanner();
@@ -159,8 +208,17 @@
         })
         .then(function (result) {
             if (result.status === 200) {
+                var previousStatus = currentTicket.status;
                 currentTicket.status = newStatus;
+                currentTicket.statusHistory = currentTicket.statusHistory || [];
+                currentTicket.statusHistory.push({
+                    user: currentUser(),
+                    from: previousStatus,
+                    to: newStatus,
+                    created: Date.now()
+                });
                 renderTransitionButtons(newStatus);
+                renderStatusHistory(currentTicket.statusHistory);
                 document.getElementById('td-status').textContent = statusLabel(newStatus);
                 document.getElementById('td-status').className =
                     'cmp-ticket-detail__status-badge status-badge status-badge--' + newStatus.toLowerCase().replace('_', '-');
@@ -180,6 +238,7 @@
         var title       = (document.getElementById('update-title')       || {}).value || '';
         var description = (document.getElementById('update-description') || {}).value || '';
         var priority    = (document.getElementById('update-priority')    || {}).value || '';
+        var assignee    = (document.getElementById('update-assignee')    || {}).value || '';
 
         if (!title.trim()) {
             setFieldError('update-title-error', 'Title is required');
@@ -194,6 +253,10 @@
         }
         if (!priority) {
             setFieldError('update-priority-error', 'Priority is required');
+            valid = false;
+        }
+        if (!assignee) {
+            setFieldError('update-assignee-error', 'Assignee is required');
             valid = false;
         }
         return valid;
@@ -256,7 +319,6 @@
 
         var formData = new URLSearchParams();
         formData.append('ticketPath', currentTicket.path);
-        formData.append('author',     (document.getElementById('comment-author') || {}).value || '');
         formData.append('body',       body);
 
         window.TicketingCsrf.postForm(COMMENT_URL, formData.toString())
@@ -264,9 +326,8 @@
         .then(function (result) {
             if (result.data.success) {
                 if (bodyEl) bodyEl.value = '';
-                var author = (document.getElementById('comment-author') || {}).value || 'Anonymous';
                 var comments = currentTicket.comments || [];
-                comments.push({ author: author, body: body, created: Date.now() });
+                comments.push({ author: result.data.author || currentUser(), body: body, created: Date.now() });
                 currentTicket.comments = comments;
                 renderComments(comments);
             } else {
@@ -312,6 +373,7 @@
         }
 
         loadTicket(ticketPath);
+        loadAssignees();
 
         var bannerClose = document.getElementById('ticket-detail-banner-close');
         if (bannerClose) bannerClose.addEventListener('click', hideBanner);

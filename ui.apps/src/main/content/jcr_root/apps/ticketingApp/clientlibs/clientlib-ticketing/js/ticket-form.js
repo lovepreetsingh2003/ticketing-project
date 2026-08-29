@@ -2,6 +2,7 @@
     'use strict';
 
     var CREATE_URL = '/bin/ticketing/ticket/create';
+    var USERS_URL = '/bin/ticketing/users';
     var VALID_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
     function getEl(id) { return document.getElementById(id); }
@@ -12,7 +13,7 @@
     }
 
     function clearAllErrors() {
-        ['title', 'description', 'priority', 'assignee', 'reporter'].forEach(function (f) {
+        ['title', 'description', 'priority', 'assignee'].forEach(function (f) {
             setError('ticket-' + f + '-error', '');
         });
         var submitError = getEl('ticket-form-error');
@@ -32,7 +33,7 @@
     function validateForm() {
         clearAllErrors();
         var valid = true;
-        var fields = ['title', 'description', 'priority', 'assignee', 'reporter'];
+        var fields = ['title', 'description', 'priority', 'assignee'];
         fields.forEach(function (f) { clearInvalid('ticket-' + f); });
 
         var title = (getEl('ticket-title') || {}).value || '';
@@ -75,14 +76,33 @@
             valid = false;
         }
 
-        var reporter = (getEl('ticket-reporter') || {}).value || '';
-        if (!reporter.trim()) {
-            setError('ticket-reporter-error', 'Reporter is required');
-            markInvalid('ticket-reporter');
-            valid = false;
-        }
-
         return valid;
+    }
+
+    function loadAssignees() {
+        var select = getEl('ticket-assignee');
+        if (!select) return;
+        select.disabled = true;
+
+        fetch(USERS_URL, { credentials: 'same-origin' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('Unable to load assignees');
+                return res.json();
+            })
+            .then(function (users) {
+                select.innerHTML = '<option value="">Select Assignee</option>';
+                users.forEach(function (user) {
+                    var option = document.createElement('option');
+                    option.value = user.userId;
+                    option.textContent = user.displayName || user.userId;
+                    select.appendChild(option);
+                });
+                select.disabled = false;
+            })
+            .catch(function () {
+                select.innerHTML = '<option value="">Assignees unavailable</option>';
+                setError('ticket-assignee-error', 'Unable to load QA and Developer users');
+            });
     }
 
     function handleSubmit(e) {
@@ -101,7 +121,6 @@
         formData.append('description', (getEl('ticket-description') || {}).value || '');
         formData.append('priority',    (getEl('ticket-priority')    || {}).value || '');
         formData.append('assignee',    (getEl('ticket-assignee')    || {}).value || '');
-        formData.append('reporter',    (getEl('ticket-reporter')    || {}).value || '');
 
         window.TicketingCsrf.postForm(CREATE_URL, formData.toString())
         .then(function (res) { return res.json().then(function (d) { return { status: res.status, data: d }; }); })
@@ -136,8 +155,9 @@
         if (!root) return;
         var form = getEl('ticket-create-form');
         if (form) form.addEventListener('submit', handleSubmit);
+        loadAssignees();
 
-        ['title', 'description', 'assignee', 'reporter'].forEach(function (f) {
+        ['title', 'description'].forEach(function (f) {
             var el = getEl('ticket-' + f);
             if (el) {
                 el.addEventListener('input', function () {
@@ -154,6 +174,15 @@
                 if (priorityEl.value) {
                     setError('ticket-priority-error', '');
                     clearInvalid('ticket-priority');
+                }
+            });
+        }
+        var assigneeEl = getEl('ticket-assignee');
+        if (assigneeEl) {
+            assigneeEl.addEventListener('change', function () {
+                if (assigneeEl.value) {
+                    setError('ticket-assignee-error', '');
+                    clearInvalid('ticket-assignee');
                 }
             });
         }

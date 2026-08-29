@@ -1,9 +1,11 @@
-<div class="cmp-ticket-detail" data-cmp-is="ticketDetail">
+<div class="cmp-ticket-detail" data-cmp-is="ticketDetail" data-user="${request.remoteUser}">
 
     <div class="cmp-ticket-detail__nav">
         <a href="/content/ticketingApp/us/en/tickets.html" class="cmp-ticket-detail__back-link">
             &larr; Back to Tickets
         </a>
+        <a href="/system/sling/logout?resource=/content/ticketingApp/us/en/tickets.html"
+           class="cmp-ticket__logout-link">Logout</a>
     </div>
 
     <div id="ticket-detail-error" class="cmp-ticket-detail__error" style="display:none;" role="alert"></div>
@@ -68,7 +70,9 @@
                     </div>
                     <div class="cmp-form__field">
                         <label class="cmp-form__label" for="update-assignee">Assignee <span class="cmp-form__required">*</span></label>
-                        <input type="text" id="update-assignee" name="assignee" class="cmp-form__input" maxlength="100"/>
+                        <select id="update-assignee" name="assignee" class="cmp-form__select">
+                            <option value="">Loading assignees...</option>
+                        </select>
                         <span class="cmp-form__error" id="update-assignee-error" role="alert"></span>
                     </div>
                     <div class="cmp-form__actions">
@@ -85,10 +89,6 @@
                 <div id="td-comments-list" class="cmp-ticket-detail__comments-list"></div>
                 <form id="ticket-comment-form" class="cmp-ticket-detail__comment-form" novalidate>
                     <div class="cmp-form__field">
-                        <label class="cmp-form__label" for="comment-author">Your Name</label>
-                        <input type="text" id="comment-author" name="author" class="cmp-form__input" maxlength="100"/>
-                    </div>
-                    <div class="cmp-form__field">
                         <label class="cmp-form__label" for="comment-body">Comment <span class="cmp-form__required">*</span></label>
                         <textarea id="comment-body" name="body" class="cmp-form__textarea" rows="3" required placeholder="Add a comment..."></textarea>
                         <span class="cmp-form__error" id="comment-body-error" role="alert"></span>
@@ -98,6 +98,11 @@
                     </div>
                     <div id="comment-form-error" class="cmp-form__submit-error" role="alert" style="display:none;"></div>
                 </form>
+            </section>
+
+            <section class="cmp-ticket-detail__section cmp-ticket-detail__history">
+                <h2 class="cmp-ticket-detail__section-title">Status History</h2>
+                <div id="td-status-history"></div>
             </section>
 
         </div>

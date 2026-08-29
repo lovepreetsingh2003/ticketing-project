@@ -1,9 +1,13 @@
 <div class="cmp-ticket-form" data-cmp-is="ticketForm">
 
     <div class="cmp-ticket-form__header">
-        <a href="/content/ticketingApp/us/en/tickets.html" class="cmp-ticket-form__back-link">
-            &larr; Back to Tickets
-        </a>
+        <div class="cmp-ticket__nav">
+            <a href="/content/ticketingApp/us/en/tickets.html" class="cmp-ticket-form__back-link">
+                &larr; Back to Tickets
+            </a>
+            <a href="/system/sling/logout?resource=/content/ticketingApp/us/en/tickets.html"
+               class="cmp-ticket__logout-link">Logout</a>
+        </div>
         <h1 class="cmp-ticket-form__title">Create New Ticket</h1>
     </div>
 
@@ -45,18 +49,18 @@
             <label class="cmp-form__label" for="ticket-assignee">
                 Assignee <span class="cmp-form__required" aria-hidden="true">*</span>
             </label>
-            <input type="text" id="ticket-assignee" name="assignee" class="cmp-form__input"
-                   placeholder="Who should handle this ticket?" maxlength="100" required aria-required="true"/>
+            <select id="ticket-assignee" name="assignee" class="cmp-form__select" required aria-required="true">
+                <option value="">Loading assignees...</option>
+            </select>
             <span class="cmp-form__error" id="ticket-assignee-error" role="alert"></span>
         </div>
 
         <div class="cmp-form__field">
             <label class="cmp-form__label" for="ticket-reporter">
-                Reporter <span class="cmp-form__required" aria-hidden="true">*</span>
+                Reporter
             </label>
-            <input type="text" id="ticket-reporter" name="reporter" class="cmp-form__input"
-                   placeholder="Your name" maxlength="100" required aria-required="true"/>
-            <span class="cmp-form__error" id="ticket-reporter-error" role="alert"></span>
+            <input type="text" id="ticket-reporter" class="cmp-form__input cmp-form__input--readonly"
+                   value="${request.remoteUser}" readonly aria-readonly="true"/>
         </div>
 
         <div class="cmp-form__actions">

@@ -32,7 +32,7 @@ public class TicketCommentServlet extends SlingAllMethodsServlet {
         response.setContentType("application/json;charset=UTF-8");
 
         String ticketPath = request.getParameter("ticketPath");
-        String author     = request.getParameter("author");
+        String author     = request.getResourceResolver().getUserID();
         String body       = request.getParameter("body");
 
         if (StringUtils.isBlank(ticketPath)) {
@@ -47,11 +47,12 @@ public class TicketCommentServlet extends SlingAllMethodsServlet {
         }
 
         try {
-            String commentPath = ticketService.addComment(
+            String updatedTicketPath = ticketService.addComment(
                 request.getResourceResolver(), ticketPath, author, body);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
-            result.put("commentPath", commentPath);
+            result.put("ticketPath", updatedTicketPath);
+            result.put("author", author);
             response.setStatus(SlingHttpServletResponse.SC_CREATED);
             response.getWriter().write(MAPPER.writeValueAsString(result));
         } catch (IllegalArgumentException e) {

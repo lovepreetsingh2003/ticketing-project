@@ -3,6 +3,15 @@
         "create path (sling:OrderedFolder) /content/dam/ticketingApp",
         "create path (nt:unstructured) /content/dam/ticketingApp/jcr:content",
         "set properties on /content/dam/ticketingApp/jcr:content\n  set cq:conf{String} to /conf/ticketingApp\n  set jcr:title{String} to \"Ticket Management Application\"\nend",
-        "create path (nt:unstructured) /content/ticketingApp/tickets"
+        "create path (nt:unstructured) /content/ticketingApp/tickets",
+        "create group ticketing-developers with path /home/groups/ticketing",
+        "create group ticketing-qa with path /home/groups/ticketing",
+        "set ACL for ticketing-developers\n  allow jcr:read on /content/ticketingApp\nend",
+        "set ACL for ticketing-qa\n  allow jcr:read on /content/ticketingApp\nend",
+        "set ACL for anonymous\n  deny jcr:read on /content/ticketingApp/tickets\nend",
+        "set ACL for ticketing-qa\n  allow jcr:read,jcr:addChildNodes,jcr:modifyProperties on /content/ticketingApp/tickets\nend",
+        "set ACL for ticketing-developers\n  allow jcr:read,jcr:modifyProperties on /content/ticketingApp/tickets\n  deny jcr:addChildNodes on /content/ticketingApp/tickets\nend",
+        "create service user ticketing-user-reader",
+        "set ACL for ticketing-user-reader\n  allow jcr:read on /home/users\n  allow jcr:read on /home/groups\nend"
     ]
 }

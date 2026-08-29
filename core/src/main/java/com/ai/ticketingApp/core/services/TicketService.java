@@ -27,7 +27,7 @@ public interface TicketService {
     void changeStatus(ResourceResolver resolver, String ticketPath, TicketStatus newStatus);
 
     /**
-     * Adds a comment to a ticket and returns the comment node path.
+     * Adds a comment to a ticket and returns the ticket path.
      */
     String addComment(ResourceResolver resolver, String ticketPath, String author, String body);
 

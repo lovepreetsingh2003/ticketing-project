@@ -1,0 +1,71 @@
+<div class="cmp-ticket-form" data-cmp-is="ticketForm">
+
+    <div class="cmp-ticket-form__header">
+        <a href="/content/ticketingApp/us/en/tickets.html" class="cmp-ticket-form__back-link">
+            &larr; Back to Tickets
+        </a>
+        <h1 class="cmp-ticket-form__title">Create New Ticket</h1>
+    </div>
+
+    <form id="ticket-create-form" class="cmp-ticket-form__form" novalidate>
+
+        <div class="cmp-form__field">
+            <label class="cmp-form__label" for="ticket-title">
+                Title <span class="cmp-form__required" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="ticket-title" name="title" class="cmp-form__input"
+                   placeholder="Enter a concise ticket title" maxlength="200" required aria-required="true"/>
+            <span class="cmp-form__error" id="ticket-title-error" role="alert"></span>
+        </div>
+
+        <div class="cmp-form__field">
+            <label class="cmp-form__label" for="ticket-description">
+                Description <span class="cmp-form__required" aria-hidden="true">*</span>
+            </label>
+            <textarea id="ticket-description" name="description" class="cmp-form__textarea" rows="6"
+                      placeholder="Describe the issue in detail" maxlength="5000" required aria-required="true"></textarea>
+            <span class="cmp-form__error" id="ticket-description-error" role="alert"></span>
+        </div>
+
+        <div class="cmp-form__field">
+            <label class="cmp-form__label" for="ticket-priority">
+                Priority <span class="cmp-form__required" aria-hidden="true">*</span>
+            </label>
+            <select id="ticket-priority" name="priority" class="cmp-form__select" required aria-required="true">
+                <option value="">Select Priority</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+            </select>
+            <span class="cmp-form__error" id="ticket-priority-error" role="alert"></span>
+        </div>
+
+        <div class="cmp-form__field">
+            <label class="cmp-form__label" for="ticket-assignee">
+                Assignee <span class="cmp-form__required" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="ticket-assignee" name="assignee" class="cmp-form__input"
+                   placeholder="Who should handle this ticket?" maxlength="100" required aria-required="true"/>
+            <span class="cmp-form__error" id="ticket-assignee-error" role="alert"></span>
+        </div>
+
+        <div class="cmp-form__field">
+            <label class="cmp-form__label" for="ticket-reporter">
+                Reporter <span class="cmp-form__required" aria-hidden="true">*</span>
+            </label>
+            <input type="text" id="ticket-reporter" name="reporter" class="cmp-form__input"
+                   placeholder="Your name" maxlength="100" required aria-required="true"/>
+            <span class="cmp-form__error" id="ticket-reporter-error" role="alert"></span>
+        </div>
+
+        <div class="cmp-form__actions">
+            <button type="submit" class="btn btn--primary" id="ticket-submit-btn">Create Ticket</button>
+            <a href="/content/ticketingApp/us/en/tickets.html" class="btn btn--secondary">Cancel</a>
+        </div>
+
+        <div id="ticket-form-error" class="cmp-form__submit-error" role="alert" style="display:none;"></div>
+        <div id="ticket-form-success" class="cmp-form__submit-success" role="status" style="display:none;"></div>
+
+    </form>
+</div>

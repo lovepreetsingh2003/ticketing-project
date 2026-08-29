@@ -1,0 +1,40 @@
+<div class="cmp-ticket-list" data-cmp-is="ticketList">
+
+    <div class="cmp-ticket-list__header">
+        <h1 class="cmp-ticket-list__title">Support Tickets</h1>
+        <a href="/content/ticketingApp/us/en/tickets/create.html" class="cmp-ticket-list__create-btn btn btn--primary">
+            + New Ticket
+        </a>
+    </div>
+
+    <div class="cmp-ticket-list__filters">
+        <div class="cmp-ticket-list__search">
+            <input type="text" id="ticket-keyword" class="cmp-ticket-list__search-input"
+                   placeholder="Search tickets by title or description..." aria-label="Search tickets"/>
+        </div>
+        <div class="cmp-ticket-list__filter-row">
+            <select id="ticket-status-filter" class="cmp-ticket-list__select" aria-label="Filter by status">
+                <option value="">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="CLOSED">Closed</option>
+                <option value="CANCELLED">Cancelled</option>
+            </select>
+            <select id="ticket-priority-filter" class="cmp-ticket-list__select" aria-label="Filter by priority">
+                <option value="">All Priorities</option>
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="ticket-list-error" class="cmp-ticket-list__error" style="display:none;" role="alert"></div>
+
+    <div id="ticket-list-container" class="cmp-ticket-list__container" aria-live="polite">
+        <div class="cmp-ticket-list__loading">Loading tickets...</div>
+    </div>
+
+</div>

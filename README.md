@@ -1,123 +1,205 @@
-# Sample AEM project template
+# Ticket Management Application
 
-This is a project template for AEM-based applications. It is intended as a best-practice set of examples as well as a potential starting point to develop your own functionality.
+An Adobe Experience Manager (AEM 6.5.22) application for creating, tracking, and resolving support tickets. Tickets are stored as JCR content nodes and managed through a browser UI backed by JSON REST-style Sling servlets.
+
+| Property | Value |
+|----------|-------|
+| **GroupId** | `com.ai.ticketingApp` |
+| **ArtifactId** | `ticketingApp` |
+| **Version** | `1.0.0-SNAPSHOT` |
+| **AEM Version** | 6.5.22 |
+| **Java** | 8 |
+
+## Features
+
+- Create tickets with title, description, priority, and assignee
+- Search and filter tickets by keyword, status, and priority
+- View ticket details with comments and status history
+- Update ticket fields and change status via a defined workflow
+- Role-based access for QA and Developer user groups
+- CSRF-protected POST mutations
+
+### Status Workflow
+
+```
+OPEN → IN_PROGRESS → RESOLVED → CLOSED
+  ↓         ↓
+CANCELLED  CANCELLED
+```
+
+### Priorities
+
+`LOW` · `MEDIUM` · `HIGH` · `CRITICAL`
+
+## Architecture
+
+```text
+Browser (HTL pages)
+    ↓ Fetch JSON
+Sling Servlets (/bin/ticketing/*)
+    ↓
+OSGi Services (TicketService, TicketStateService, …)
+    ↓
+JCR Repository (/content/ticketingApp/tickets)
+```
+
+| Layer | Technology | Module |
+|-------|-----------|--------|
+| Frontend | HTL, vanilla JavaScript, CSS | `ui.apps`, `ui.frontend` |
+| Backend | Java 8, OSGi, Apache Sling | `core` |
+| Data | JCR (Jackrabbit Oak) | AEM platform |
+| Config | OSGi, repoinit ACLs | `ui.config` |
+| Content | Pages, templates | `ui.content` |
 
 ## Modules
 
-The main parts of the template are:
+| Module | Description |
+|--------|-------------|
+| [core](core/) | OSGi bundle — servlets, services, Sling models, validation, state machine |
+| [ui.apps](ui.apps/) | AEM components, HTL templates, clientlibs (`clientlib-ticketing`) |
+| [ui.content](ui.content/) | Site pages, templates, experience fragments |
+| [ui.config](ui.config/) | Runmode OSGi configs, repoinit scripts, service user mappings |
+| [ui.frontend](ui.frontend/) | Webpack/SCSS build for site-wide Core Component styling |
+| [ui.apps.structure](ui.apps.structure/) | Repository structure package |
+| [it.tests](it.tests/) | Server-side integration tests (Failsafe) |
+| [ui.tests](ui.tests/) | Cypress UI tests |
+| [all](all/) | Container content package for deployment |
+| [dispatcher](dispatcher/) | Apache Dispatcher configuration |
 
-* [core:](core/README.md) Java bundle containing all core functionality like OSGi services, listeners or schedulers, as well as component-related Java code such as servlets or request filters.
-* [it.tests:](it.tests/README.md) Java based integration tests
-* [ui.apps:](ui.apps/README.md) contains the /apps (and /etc) parts of the project, ie JS&CSS clientlibs, components, and templates
-* [ui.content:](ui.content/README.md) contains sample content using the components from the ui.apps
-* ui.config: contains runmode specific OSGi configs for the project
-* [ui.frontend:](ui.frontend.general/README.md) an optional dedicated front-end build mechanism (Angular, React or general Webpack project)
-* [ui.tests.cypress:](ui.tests.cypress/README.md) Cypress based UI tests
-* [ui.tests.wdio:](ui.tests.wdio/README.md) Selenium based UI tests
-* all: a single content package that embeds all of the compiled modules (bundles and content packages) including any vendor dependencies
-* analyse: this module runs analysis on the project which provides additional validation for deploying into AEMaaCS
+## UI Pages
 
-## How to build
+| Page | Path |
+|------|------|
+| Ticket list | `/content/ticketingApp/us/en/tickets.html` |
+| Create ticket | `/content/ticketingApp/us/en/tickets/create.html` |
+| Ticket detail | `/content/ticketingApp/us/en/tickets/detail.html?ticketPath=...` |
 
-To build all the modules run in the project root directory the following command with Maven 3:
+## API Endpoints
 
-    mvn clean install
+All endpoints require authentication. POST requests require a Granite CSRF token.
 
-To build all the modules and deploy the `all` package to a local instance of AEM, run in the project root directory the following command:
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/bin/ticketing/tickets/search` | Search/filter tickets |
+| GET | `/bin/ticketing/ticket/detail` | Get ticket by path |
+| POST | `/bin/ticketing/ticket/create` | Create a ticket |
+| POST | `/bin/ticketing/ticket/update` | Update ticket fields |
+| POST | `/bin/ticketing/ticket/status` | Change ticket status |
+| POST | `/bin/ticketing/ticket/comment` | Add a comment |
+| GET | `/bin/ticketing/users` | List assignable users |
 
-    mvn clean install -PautoInstallSinglePackage
+See [api-contract.md](api-contract.md) for full request/response schemas and error codes.
 
-Or to deploy it to a publish instance, run
+## Security
 
-    mvn clean install -PautoInstallSinglePackagePublish
+Repoinit scripts create two AEM groups with differentiated permissions:
 
-Or alternatively
+| Group | Permissions on `/content/ticketingApp/tickets` |
+|-------|-----------------------------------------------|
+| `ticketing-qa` | Read, create, and modify tickets |
+| `ticketing-developers` | Read and modify tickets (cannot create) |
 
-    mvn clean install -PautoInstallSinglePackage -Daem.port=4503
+Anonymous users are denied read access to ticket data. Authentication is required for all ticket pages and `/bin/ticketing` endpoints.
 
-Or to deploy only the bundle to the author, run
+## Prerequisites
 
-    mvn clean install -PautoInstallBundle
+- Java 8 JDK
+- Maven 3.3.9+
+- Adobe Experience Manager 6.5.22 (author on `localhost:4502`, publish on `4503`)
+- Node.js v16.17.0 and npm 8.15.0 (for `ui.frontend` build)
 
-Or to deploy only a single content package, run in the sub-module directory (i.e `ui.apps`)
+## Build & Deploy
 
-    mvn clean install -PautoInstallPackage
+Build all modules:
 
-## Documentation
+```bash
+mvn clean install
+```
 
-The build process also generates documentation in the form of README.md files in each module directory for easy reference. Depending on the options you select at build time, the content may be customized to your project.
+Build and deploy the full package to a local AEM author instance:
+
+```bash
+mvn clean install -PautoInstallSinglePackage
+```
+
+Deploy to publish:
+
+```bash
+mvn clean install -PautoInstallSinglePackagePublish
+```
+
+Deploy only the OSGi bundle:
+
+```bash
+mvn clean install -PautoInstallBundle
+```
+
+Build frontend assets (from `ui.frontend`):
+
+```bash
+cd ui.frontend
+npm install
+npm run prod
+```
 
 ## Testing
 
-There are three levels of testing contained in the project:
-
 ### Unit tests
 
-This show-cases classic unit testing of the code contained in the bundle. To
-test, execute:
+```bash
+mvn clean test
+```
 
-    mvn clean test
+16 test classes in `core` cover all ticket servlets and models (JUnit 5, Mockito, AEM Mock).
 
 ### Integration tests
 
-This allows running integration tests that exercise the capabilities of AEM via
-HTTP calls to its API. To run the integration tests, run:
+Requires a running AEM instance:
 
-    mvn clean verify -Plocal
+```bash
+mvn clean verify -Plocal
+```
 
-Test classes must be saved in the `src/main/java` directory (or any of its
-subdirectories), and must be contained in files matching the pattern `*IT.java`.
-
-The configuration provides sensible defaults for a typical local installation of
-AEM. If you want to point the integration tests to different AEM author and
-publish instances, you can use the following system properties via Maven's `-D`
-flag.
-
-| Property | Description | Default value |
-| --- | --- | --- |
-| `it.author.url` | URL of the author instance | `http://localhost:4502` |
-| `it.author.user` | Admin user for the author instance | `admin` |
-| `it.author.password` | Password of the admin user for the author instance | `admin` |
-| `it.publish.url` | URL of the publish instance | `http://localhost:4503` |
-| `it.publish.user` | Admin user for the publish instance | `admin` |
-| `it.publish.password` | Password of the admin user for the publish instance | `admin` |
-
-The integration tests in this archetype use the [AEM Testing
-Clients](https://github.com/adobe/aem-testing-clients) and showcase some
-recommended [best
-practices](https://github.com/adobe/aem-testing-clients/wiki/Best-practices) to
-be put in use when writing integration tests for AEM.
-
-## Static Analysis
-
-The `analyse` module performs static analysis on the project for deploying into AEMaaCS. It is automatically
-run when executing
-
-    mvn clean install
-
-from the project root directory. Additional information about this analysis and how to further configure it
-can be found here https://github.com/adobe/aemanalyser-maven-plugin
+| Property | Default |
+|----------|---------|
+| `it.author.url` | `http://localhost:4502` |
+| `it.author.user` | `admin` |
+| `it.author.password` | `admin` |
+| `it.publish.url` | `http://localhost:4503` |
 
 ### UI tests
 
-They will test the UI layer of your AEM application using either Cypress or Selenium technology.
+Cypress tests in the `ui.tests` module. See [ui.tests/README.md](ui.tests/README.md) for Docker-based execution.
 
-Check README file in `ui.tests.cypress` or `ui.tests.wdio` module for more details.
+See [test-strategy.md](test-strategy.md) for full test scope and coverage details.
+
+## Project Documentation
+
+| Document | Description |
+|----------|-------------|
+| [requirements-analysis.md](requirements-analysis.md) | Functional/non-functional requirements, assumptions, edge cases |
+| [acceptance-criteria.md](acceptance-criteria.md) | Verifiable acceptance checklists |
+| [implementation-plan.md](implementation-plan.md) | Build phases, milestones, risks |
+| [design-notes.md](design-notes.md) | Architecture, frontend/backend/database design |
+| [api-contract.md](api-contract.md) | Full API endpoint documentation |
+| [test-strategy.md](test-strategy.md) | Test scope, frameworks, and coverage |
 
 ## ClientLibs
 
-The frontend module is made available using an [AEM ClientLib](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/clientlibs.html). When executing the NPM build script, the app is built and the [`aem-clientlib-generator`](https://github.com/wcm-io-frontend/aem-clientlib-generator) package takes the resulting build output and transforms it into such a ClientLib.
+| ClientLib | Category | Contents |
+|-----------|----------|----------|
+| `clientlib-ticketing` | `ticketingApp.ticketing` | Ticket UI JS and CSS |
+| `clientlib-base` | `ticketingApp.base` | Core WCM component clientlibs |
+| `clientlib-site` | `ticketingApp.site` | Webpack-generated site SCSS |
 
-A ClientLib will consist of the following files and directories:
+The `ui.frontend` module builds site assets via Webpack and copies them into `ui.apps` using [aem-clientlib-generator](https://github.com/wcm-io-frontend/aem-clientlib-generator).
 
-- `css/`: CSS files which can be requested in the HTML
-- `css.txt` (tells AEM the order and names of files in `css/` so they can be merged)
-- `js/`: JavaScript files which can be requested in the HTML
-- `js.txt` (tells AEM the order and names of files in `js/` so they can be merged
-- `resources/`: Source maps, non-entrypoint code chunks (resulting from code splitting), static assets (e.g. icons), etc.
+## Maven Repository
 
-## Maven settings
+This project uses the Adobe public Maven repository. To configure it in your Maven settings, see:
 
-The project comes with the auto-public repository configured. To setup the repository in your Maven settings, refer to:
+https://experienceleague.adobe.com/docs/experience-manager-65/deploying/deploying/custom-manufacturing-install-reference-material.html
 
-    http://helpx.adobe.com/experience-manager/kb/SetUpTheAdobeMavenRepository.html
+## License
+
+Copyright 2015 Adobe Systems Incorporated. Licensed under the Apache License, Version 2.0.
